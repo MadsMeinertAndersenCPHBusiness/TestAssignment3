@@ -13,6 +13,11 @@ public class EmployeeCreation {
         this.birthdate = birthdate;
     }
 
+    public EmployeeCreation(String firstname, String lastname) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+    }
+
     public String getFirstname() {
         return firstname;
     }

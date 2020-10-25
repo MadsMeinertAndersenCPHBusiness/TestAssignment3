@@ -6,10 +6,7 @@ import datalayer.customer.CustomerStorageImpl;
 import dto.CustomerCreation;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
 
@@ -20,8 +17,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class CreateCustomerTest {
     private CustomerStorage customerStorage;
 
+
+    @AfterAll
+    public void remove() throws SQLException {
+    customerStorage.removeCustomers();
+    }
+
     @BeforeAll
-    public void Setup() throws SQLException {
+    public void setup() throws SQLException {
         var url = "jdbc:mysql://localhost:3307/";
         var db = "DemoApplicationTest";
 
@@ -74,5 +77,11 @@ class CreateCustomerTest {
 
         // Assert
         assertEquals(1, id2 - id1);
+    }
+    @Test
+    public void mustIncreaseNumberOfRowWithOneWhenNewCustomerIsCreated() throws SQLException {
+        customerStorage.createCustomer(new CustomerCreation("John","Carlssonn"));
+        var size = customerStorage.getCustomers().size();
+        assertEquals(size, 101);
     }
 }

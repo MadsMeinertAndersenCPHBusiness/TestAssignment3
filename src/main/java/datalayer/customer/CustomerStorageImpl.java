@@ -79,4 +79,12 @@ public class CustomerStorageImpl implements CustomerStorage {
             }
         }
     }
+    @Override
+    public void removeCustomers() throws SQLException {
+        var sql = "delete from Customers";
+        try (var con = getConnection();
+             var stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            stmt.executeUpdate();
+        }
+    }
 }

@@ -10,10 +10,7 @@ import datalayer.employee.EmployeeStorageImpl;
 import dto.*;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -30,11 +27,18 @@ class CreateBookingTest {
     private Time start = new Time(12,0,0);
     private Time end = new Time(12,30,0);
     private Date date = new Date(System.currentTimeMillis());
+    private int testCustomerId, testEmployeeId;
 
+    @AfterAll
+    public void remove() throws SQLException {
+       customerStorage.removeCustomers();
+       employeeStorage.removeEmployees();
+    }
     @BeforeAll
     public void Setup() throws SQLException {
         var url = "jdbc:mysql://localhost:3307/";
         var db = "DemoApplicationTest";
+
 
         Flyway flyway = new Flyway(new FluentConfiguration()
                 .defaultSchema(db)
@@ -57,12 +61,16 @@ class CreateBookingTest {
 
     private void addFakeBooking(int numBookings) throws SQLException {
         Faker faker = new Faker();
-        for (int i = 1; i < numBookings; i++) {
+        for (int i = 0; i < numBookings; i++) {
+
+
             CustomerCreation c = new CustomerCreation(faker.name().firstName(), faker.name().lastName());
             customerStorage.createCustomer(c);
             EmployeeCreation e = new EmployeeCreation(faker.name().firstName(), faker.name().lastName(), date);
             employeeStorage.createEmployee(e);
-            BookingCreation b = new BookingCreation(i, i, new Date(System.currentTimeMillis()), start, end);
+            testCustomerId = customerStorage.getCustomers().get(i).getId();
+            testEmployeeId = employeeStorage.getEmployees().get(i).getId();
+            BookingCreation b = new BookingCreation(testCustomerId, testEmployeeId, new Date(System.currentTimeMillis()), start, end);
             bookingStorage.createBooking(b);
         }
 
@@ -72,24 +80,31 @@ class CreateBookingTest {
     public void mustSaveCustomerInDatabaseWhenCallingCreateCustomer() throws SQLException {
         // Arrange
         // Act
-        bookingStorage.createBooking(new BookingCreation(1,1, date,start, end));
+
+        bookingStorage.createBooking(new BookingCreation(testCustomerId,testEmployeeId, date,start, end));
 
         // Assert
         var bookings = bookingStorage.getBookings();
         assertTrue(
                 bookings.stream().anyMatch(x ->
-                        x.getCustomerId() == 1 &&
-                                x.getEmployeeId() == 1));
+                        x.getCustomerId() == testCustomerId &&
+                                x.getEmployeeId() == testEmployeeId));
     }
 
     @Test
     public void mustReturnLatestId() throws SQLException {
         // Arrange
         // Act
-        var id1 = bookingStorage.createBooking(new BookingCreation(1, 1, date, start, end));
-        var id2 = bookingStorage.createBooking(new BookingCreation(1, 1, date, start, end));
+        var id1 = bookingStorage.createBooking(new BookingCreation(testCustomerId, testEmployeeId, date, start, end));
+        var id2 = bookingStorage.createBooking(new BookingCreation(testCustomerId, testEmployeeId, date, start, end));
 
         // Assert
         assertEquals(1, id2 - id1);
+    }
+    @Test
+    public void mustIncreaseNumberOfRowWithOneWhenNewBookingIsCreated() throws SQLException {
+        bookingStorage.createBooking(new BookingCreation(testCustomerId,testEmployeeId, date, start, end));
+        var size = bookingStorage.getBookings().size();
+        assertEquals(size, 103);
     }
 }

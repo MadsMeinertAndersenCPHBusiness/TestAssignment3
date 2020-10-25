@@ -2,6 +2,7 @@ package datalayer.booking;
 
 import dto.Booking;
 import dto.BookingCreation;
+import dto.Employee;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ public class BookingStorageImpl implements BookingStorage {
     private String connectionString;
     private String username, password;
     private List<Booking> bookingsForCustomer = new ArrayList<>();
+    private List<Booking> bookingsForEmployee = new ArrayList<>();
 
     public BookingStorageImpl(String conStr, String user, String pass){
         connectionString = conStr;
@@ -73,6 +75,28 @@ public class BookingStorageImpl implements BookingStorage {
     }
 
     @Override
+    public Collection<Booking> getBookingsForEmployee(int employeeId) throws SQLException {
+        var sql = "select * from Bookings where employeeId = ?";
+        try (var con = getConnection();
+             var stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, employeeId);
+
+            try (var resultSet = stmt.executeQuery()) {
+                while (resultSet.next()){
+                    var id = resultSet.getInt("ID");
+                    var customerID = resultSet.getInt("customerId");
+                    var employeeID = resultSet.getInt("employeeId");
+                    var date  = resultSet.getDate("date");
+                    var start = resultSet.getTime("start");
+                    var end = resultSet.getTime("end");
+                    Booking booking = new Booking(id, customerID, employeeID, date, start, end);
+                    bookingsForEmployee.add(booking);
+                }
+                return bookingsForEmployee;
+            }
+        }
+    }
+    @Override
     public List<Booking> getBookings() throws SQLException {
         var sql = "select * from Bookings";
         try (var con = getConnection();
@@ -91,6 +115,15 @@ public class BookingStorageImpl implements BookingStorage {
                 }
                 return bookingsForCustomer;
             }
+        }
+    }
+
+    @Override
+    public void removeBookings() throws SQLException {
+        var sql = "delete from Bookings";
+        try (var con = getConnection();
+             var stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            stmt.executeUpdate();
         }
     }
 }

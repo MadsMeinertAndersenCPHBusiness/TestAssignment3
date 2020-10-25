@@ -8,6 +8,12 @@ public class Employee {
     private String lastname;
     private java.sql.Date birthdate;
 
+    public Employee(int id, String firstname, String lastname) {
+        this.id = id;
+        this.firstname = firstname;
+        this.lastname = lastname;
+    }
+
     public Employee(int id, String firstName, String lastName, Date birthdate){
         this.id = id;
         this.firstname = firstName;
